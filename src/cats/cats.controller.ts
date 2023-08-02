@@ -9,17 +9,21 @@ import {
   Query,
 } from '@nestjs/common';
 import { FilterCatDto, CreateCatDto, UpdateCatDto } from './dto';
+import { CatsService } from './cats.service';
+import { Cat } from './interfaces/cat.interface';
 
 @Controller('cats')
 export class CatsController {
+  constructor(private catService: CatsService) {}
+
   @Get()
-  listAll(@Query() query: FilterCatDto) {
-    return `List all cats with name like "${query.name}", limit ${query.limit} items.`;
+  async listAll(@Query() query: FilterCatDto): Promise<Cat[]> {
+    return this.catService.findAll();
   }
 
   @Post()
-  createCat(@Body() data: CreateCatDto): string {
-    return `Created a new cat with name "${data.name}", age "${data.age}"`;
+  async createCat(@Body() data: CreateCatDto) {
+    this.catService.create(data);
   }
 
   @Get(':id')
