@@ -27,6 +27,6 @@ import * as Joi from 'joi';
 })
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
-    console.log('middleware');
+    console.log(consumer);
   }
 }
