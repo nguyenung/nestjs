@@ -1,0 +1,19 @@
+version: '3.8'
+
+services:
+  nest_boilerplate:
+    container_name: nest_boilerplate
+    image: nest_boilerplate:1.0.0
+    build:
+      context: .
+      target: development
+    command: npm run start:dev
+    ports:
+      - ${PORT}:${PORT}
+    volumes:
+      - ./:/usr/src/app
+    restart: unless-stopped
+
+networks:
+  default:
+    driver: bridge
