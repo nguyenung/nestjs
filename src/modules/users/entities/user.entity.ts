@@ -2,6 +2,7 @@ import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import mongoose, { HydratedDocument } from 'mongoose';
 import { UserRole } from '@module/user-roles/entities/user-role.entity';
 import { BaseEntity } from '@module/shared/base/base.entity';
+import { Address, AddressSchema } from './address.entity';
 
 export type UserDocument = HydratedDocument<User>;
 
@@ -57,6 +58,9 @@ export class User extends BaseEntity {
     ref: UserRole.name,
   })
   role: UserRole;
+
+  @Prop({ type: AddressSchema })
+  address: Address;
 
   @Prop()
   headline: string;
