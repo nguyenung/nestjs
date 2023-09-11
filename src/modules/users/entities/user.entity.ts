@@ -1,8 +1,11 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import mongoose, { HydratedDocument } from 'mongoose';
+import mongoose, { HydratedDocument, Model } from 'mongoose';
 import { UserRole } from '@module/user-roles/entities/user-role.entity';
 import { BaseEntity } from '@module/shared/base/base.entity';
 import { Address, AddressSchema } from './address.entity';
+import { FlashCardDocument } from '@module/flash-cards/entities/flash-card.entity';
+import { CollectionDocument } from '@module/collections/entities/collection.entity';
+import { NextFunction } from 'express';
 
 export type UserDocument = HydratedDocument<User>;
 
@@ -17,12 +20,30 @@ export enum gender {
     createdAt: 'created_at',
     updatedAt: 'updated_at',
   },
+  toJSON: {
+    getters: true,
+    virtuals: true,
+  },
 })
 export class User extends BaseEntity {
-  @Prop({ required: true, minlength: 2, maxlength: 50 })
+  @Prop({
+    required: true,
+    minlength: 2,
+    maxlength: 50,
+    set: (first_name: string) => {
+      return first_name.trim();
+    },
+  })
   first_name: string;
 
-  @Prop({ required: true })
+  @Prop({
+    required: true,
+    minlength: 2,
+    maxlength: 50,
+    set: (last_name: string) => {
+      return last_name.trim();
+    },
+  })
   last_name: string;
 
   @Prop({
@@ -32,7 +53,16 @@ export class User extends BaseEntity {
   })
   email: string;
 
-  @Prop({ match: /^([+]\d{2})?\d{10}$/ })
+  @Prop({
+    match: /^([+]\d{2})?\d{10}$/,
+    get: (phoneNumber: string) => {
+      if (!phoneNumber) {
+        return;
+      }
+      const lastThreeDigits = phoneNumber.slice(phoneNumber.length - 4);
+      return `****-***-${lastThreeDigits}`;
+    },
+  })
   phone: string;
 
   @Prop({ required: true, unique: true })
@@ -67,6 +97,32 @@ export class User extends BaseEntity {
 
   @Prop()
   friendly_id: number;
+
+  default_address?: string;
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);
+
+export const UserSchemaFactory = (
+  flashCardModel: Model<FlashCardDocument>,
+  collectionModel: Model<CollectionDocument>,
+) => {
+  const userSchema = UserSchema;
+  userSchema.virtual('default_address').get(function (this: UserDocument) {
+    if (this.address) {
+      return `${(this.address.street && ' ') || ''}${this.address.city} ${
+        this.address.state
+      } ${this.address.country}`;
+    }
+  });
+
+  userSchema.pre('findOneAndDelete', async function (next: NextFunction) {
+    const user = await this.model.findOne(this.getFilter());
+    await Promise.all([
+      flashCardModel.deleteMany({ user: user._id }).exec(),
+      collectionModel.deleteMany({ user: user._id }).exec(),
+    ]);
+    return next();
+  });
+  return userSchema;
+};

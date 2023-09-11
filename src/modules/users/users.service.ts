@@ -1,26 +1,24 @@
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
-import { UpdateUserDto } from './dto/update-user.dto';
+import { BaseServiceAbstract } from 'src/services/base/base.abstract.service';
+import { User } from './entities/user.entity';
+import { UserRepositoryInterface } from './interfaces/users.interface';
+import { UserRolesService } from '@module/user-roles/user-roles.service';
 
 @Injectable()
-export class UsersService {
-  create(createUserDto: CreateUserDto) {
-    return 'This action adds a new user';
+export class UsersService extends BaseServiceAbstract<User> {
+  constructor(
+    @Inject('UserRepositoryInterface')
+    private readonly userRepository: UserRepositoryInterface,
+    private readonly userRoleService: UserRolesService,
+  ) {
+    super(userRepository);
   }
 
-  findAll() {
-    return `This action returns all users`;
-  }
-
-  findOne(id: number) {
-    return `This action returns a #${id} user`;
-  }
-
-  update(id: number, updateUserDto: UpdateUserDto) {
-    return `This action updates a #${id} user`;
-  }
-
-  remove(id: number) {
-    return `This action removes a #${id} user`;
+  async create(createUserDto: CreateUserDto) {
+    const user = await this.userRepository.create({
+      ...createUserDto,
+    });
+    return user;
   }
 }

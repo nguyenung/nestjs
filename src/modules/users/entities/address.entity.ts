@@ -1,7 +1,8 @@
+import { BaseEntity } from '@module/shared/base/base.entity';
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 
 @Schema()
-export class Address {
+export class Address extends BaseEntity {
   @Prop({ minlength: 2, maxlength: 120 })
   street?: string;
 
